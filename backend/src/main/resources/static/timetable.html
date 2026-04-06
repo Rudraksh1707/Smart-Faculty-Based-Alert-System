@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable - Smart Faculty Alert System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="lni lni-pulse"></i>
+            <span>Faculty Alert</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <i class="lni lni-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="faculty.html" class="nav-item">
+                <i class="lni lni-users"></i>
+                <span>Faculty Management</span>
+            </a>
+            <a href="timetable.html" class="nav-item active">
+                <i class="lni lni-calendar"></i>
+                <span>Timetable Management</span>
+            </a>
+        </nav>
+        <div class="logout-btn" id="logoutBtn">
+            <i class="lni lni-exit"></i>
+            <span>Logout</span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">Lecture Scheduler</h1>
+                <p style="color: var(--text-muted);">Manage timetables and dynamic alerts.</p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn" onclick="clearAllTimetable()" style="background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 8px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <i class="lni lni-trash-can"></i> Clear All Data
+                </button>
+                <button class="btn btn-primary" onclick="downloadPDF()" style="background: #6B7280; box-shadow: none; color: #fff; border-color: transparent;">
+                    <i class="lni lni-download"></i> Download PDF
+                </button>
+                <button class="btn btn-primary" onclick="showModal('uploadModal')" style="background: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                    <i class="lni lni-upload"></i> Bulk Upload
+                </button>
+                <button class="btn btn-primary" onclick="openTimetableModal()">
+                    <i class="lni lni-plus"></i> Schedule Class
+                </button>
+            </div>
+        </header>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2 style="font-size: 1.125rem;">Upcoming Lectures</h2>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="date" id="dateFilter" class="form-control" style="width: auto;">
+                    <div style="position: relative;">
+                        <input type="text" id="ttSearch" class="form-control" placeholder="Search by subject or faculty..." style="padding-left: 2.5rem; width: 250px;">
+                        <i class="lni lni-search-alt" style="position: absolute; left: 1rem; top: 0.8rem; color: var(--text-muted);"></i>
+                    </div>
+                </div>
+            </div>
+            <table id="ttTable">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Subject</th>
+                        <th>Assigned Faculty</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ttBody">
+                    <!-- Data populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Schedule Class Modal -->
+    <div class="modal-overlay" id="ttModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Schedule Lecture</h2>
+                <button class="btn-icon close-modal"><i class="lni lni-close"></i></button>
+            </div>
+            <form id="ttForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="ttSubject">Subject / Course Name</label>
+                        <input type="text" id="ttSubject" class="form-control" required placeholder="e.g. Data Structures">
+                    </div>
+                    <div class="form-group">
+                        <label for="ttFaculty">Assign Faculty</label>
+                        <select id="ttFaculty" class="form-control" required>
+                            <option value="">Select Faculty Member</option>
+                            <!-- Options injected -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ttDate">Lecture Date</label>
+                        <input type="date" id="ttDate" class="form-control" required>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="ttStart">Start Time</label>
+                            <input type="time" id="ttStart" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="ttEnd">End Time</label>
+                            <input type="time" id="ttEnd" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn close-modal" style="background: var(--border); color: var(--text-main);">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mark Absent & Substitute Modal -->
+    <div class="modal-overlay" id="absentModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2><i class="lni lni-warning text-danger" style="color: var(--warning); margin-right: 0.5rem;"></i> Smart Substitution System</h2>
+                <button class="btn-icon close-modal"><i class="lni lni-close"></i></button>
+            </div>
+            <form id="absentForm">
+                <div class="modal-body">
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.875rem;">
+                        Marking a teacher absent will instruct the system to instantly locate a free educator in the exact same department for all their classes on the selected date. The system will automatically re-assign and rapidly notify the substitute teacher.
+                    </p>
+                    <div class="form-group">
+                        <label for="absFaculty">Select Absent Faculty</label>
+                        <select id="absFaculty" class="form-control" required>
+                            <option value="">Select Faculty Member</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="absDate">Date of Absence</label>
+                        <input type="date" id="absDate" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn close-modal" style="background: var(--border); color: var(--text-main);">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Trigger Auto-Substitute</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Bulk Import Schedules (.xlsx / .csv)</h2>
+                <button class="btn-icon close-modal"><i class="lni lni-close"></i></button>
+            </div>
+            <form id="uploadForm">
+                <div class="modal-body">
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                        <strong>Format Rules:</strong> The uploaded file must match the college's weekly grid format (Days on rows, Timeslots on headers).
+                    </p>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="bulkStart">Semester Start Date</label>
+                            <input type="date" id="bulkStart" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="bulkEnd">Semester End Date</label>
+                            <input type="date" id="bulkEnd" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label for="bulkFaculty">Assign To Faculty (Optional)</label>
+                        <select id="bulkFaculty" class="form-control">
+                            <option value="">Auto-Detect from Excel Cells</option>
+                        </select>
+                        <small style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 0.25rem;">If your Excel file doesn't contain teacher names inside the cells, select the Faculty here to forcefully assign all valid timeslots to them.</small>
+                    </div>
+                    <div style="border: 2px dashed rgba(99, 102, 241, 0.5); padding: 2rem; border-radius: var(--radius); text-align: center; background: rgba(99, 102, 241, 0.05);">
+                        <input type="file" id="bulkFile" accept=".xlsx" required style="display: block; width: 100%;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn close-modal" style="background: var(--border); color: var(--text-main);">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="lni lni-cloud-upload"></i> Process File</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <button class="btn btn-danger" style="position: fixed; bottom: 2rem; right: 2rem; border-radius: 99px; box-shadow: var(--shadow-lg); padding: 1rem 1.5rem;" onclick="openAbsentModal()">
+        <i class="lni lni-ambulance"></i> Emergency Absence
+    </button>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let ttData = [];
+        let facultyList = [];
+
+        async function initPage() {
+            try {
+                facultyList = await api.faculty.getAll();
+                loadTT();
+                
+                // Populate both selects
+                const ttSel = document.getElementById('ttFaculty');
+                const absSel = document.getElementById('absFaculty');
+                const bulkSel = document.getElementById('bulkFaculty');
+                ttSel.innerHTML = '<option value="">Select Faculty</option>';
+                absSel.innerHTML = '<option value="">Select Faculty</option>';
+                bulkSel.innerHTML = '<option value="">Auto-Detect from Excel Cells</option>';
+                
+                facultyList.forEach(f => {
+                    const o1 = document.createElement('option');
+                    o1.value = f.id; o1.textContent = `${f.name} (${f.department})`;
+                    ttSel.appendChild(o1);
+                    
+                    const o2 = document.createElement('option');
+                    o2.value = f.id; o2.textContent = `${f.name} (${f.department})`;
+                    absSel.appendChild(o2);
+
+                    const o3 = document.createElement('option');
+                    o3.value = f.id; o3.textContent = `${f.name} (${f.department})`;
+                    bulkSel.appendChild(o3);
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Auto-fill subject when faculty is selected
+        document.getElementById('ttFaculty').addEventListener('change', (e) => {
+            const facId = e.target.value;
+            if (!facId) return;
+            const fac = facultyList.find(f => f.id == facId);
+            if (fac && fac.subject) {
+                document.getElementById('ttSubject').value = fac.subject;
+                // Optional: visual feedback
+                document.getElementById('ttSubject').style.backgroundColor = '#f0f9ff';
+                setTimeout(() => document.getElementById('ttSubject').style.backgroundColor = '', 1000);
+            }
+        });
+
+        async function loadTT() {
+            try {
+                ttData = await api.timetable.getAll();
+                // Sort by date then time
+                ttData.sort((a,b) => new Date(a.date+'T'+a.startTime) - new Date(b.date+'T'+a.startTime));
+                applyFilters();
+            } catch (err) {
+                Swal.fire('Error', 'Failed to fetch timetable data', 'error');
+            }
+        }
+
+        function applyFilters() {
+            const dateVal = document.getElementById('dateFilter').value;
+            const term = document.getElementById('ttSearch').value.toLowerCase();
+            
+            const filtered = ttData.filter(t => {
+                const matchDate = !dateVal || t.date === dateVal;
+                const matchSearch = !term || 
+                                    t.subject.toLowerCase().includes(term) ||
+                                    t.faculty.name.toLowerCase().includes(term);
+                return matchDate && matchSearch;
+            });
+            renderTable(filtered);
+        }
+
+        document.getElementById('ttSearch').addEventListener('input', applyFilters);
+        document.getElementById('dateFilter').addEventListener('change', applyFilters);
+
+        function renderTable(data) {
+            const tbody = document.getElementById('ttBody');
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="color: var(--text-muted); padding: 2rem;">No schedules found.</td></tr>';
+                return;
+            }
+
+            data.forEach(t => {
+                const tr = document.createElement('tr');
+                
+                let badgeClass = 'badge-scheduled';
+                if(t.status === 'SUBSTITUTED') badgeClass = 'badge-substituted';
+                if(t.status === 'CANCELLED') badgeClass = 'badge-cancelled';
+                
+                let facDisplay = `
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--border); display:flex; align-items:center; justify-content:center; font-weight: 600; color: var(--primary); font-size: 0.8rem;">
+                            ${t.faculty.name.substring(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                            <div style="font-weight: 500;">${t.faculty.name}</div>
+                            ${t.originalFaculty ? `<div style="font-size:0.75rem; color: var(--warning);">Sub for ${t.originalFaculty.name}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight: 500;">${t.date}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">${t.startTime} - ${t.endTime}</div>
+                    </td>
+                    <td style="font-weight: 500;">${t.subject}</td>
+                    <td>${facDisplay}</td>
+                    <td><span class="badge ${badgeClass}">${t.status}</span></td>
+                    <td>
+                        <button class="btn-icon delete" onclick="deleteTT(${t.id})"><i class="lni lni-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openTimetableModal() {
+            showModal('ttModal');
+        }
+        
+        function openAbsentModal() {
+            showModal('absentModal');
+        }
+
+        document.getElementById('ttForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.textContent = 'Scheduling...';
+            btn.disabled = true;
+
+            const facId = document.getElementById('ttFaculty').value;
+            const payload = {
+                faculty: { id: facId },
+                subject: document.getElementById('ttSubject').value,
+                date: document.getElementById('ttDate').value,
+                startTime: document.getElementById('ttStart').value + ":00",
+                endTime: document.getElementById('ttEnd').value + ":00",
+                status: 'SCHEDULED'
+            };
+
+            try {
+                await api.timetable.create(payload);
+                Swal.fire({ icon: 'success', title: 'Scheduled!', text: 'Lecture scheduled successfully', timer: 1500, showConfirmButton: false });
+                hideModal('ttModal');
+                e.target.reset();
+                loadTT();
+            } catch (err) {
+                Swal.fire('Error', err.message || 'Failed to schedule', 'error');
+            } finally {
+                btn.textContent = 'Save Schedule';
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.innerHTML = '<i class="lni lni-spinner-solid"></i> Uploading...';
+            btn.disabled = true;
+
+            const fileInput = document.getElementById('bulkFile');
+            const file = fileInput.files[0];
+            const start = document.getElementById('bulkStart').value;
+            const end = document.getElementById('bulkEnd').value;
+            const facultyIdStr = document.getElementById('bulkFaculty').value;
+            const facultyId = facultyIdStr ? parseInt(facultyIdStr) : null;
+
+            if (!file || !start || !end) {
+                Swal.fire('Error', 'Please select a file and valid dates.', 'error');
+                btn.innerHTML = '<i class="lni lni-cloud-upload"></i> Process File';
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                const msg = await api.timetable.upload(file, start, end, facultyId);
+                Swal.fire({ icon: 'success', title: 'Upload Complete', text: msg, confirmButtonColor: '#4F46E5' });
+                hideModal('uploadModal');
+                e.target.reset();
+                loadTT();
+            } catch (err) {
+                Swal.fire('Error', err.message || 'Failed to parse file', 'error');
+            } finally {
+                btn.innerHTML = '<i class="lni lni-cloud-upload"></i> Process File';
+                btn.disabled = false;
+            }
+        });
+        
+        document.getElementById('absentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.textContent = 'Processing Substitution...';
+            btn.disabled = true;
+
+            const payload = {
+                facultyId: document.getElementById('absFaculty').value,
+                date: document.getElementById('absDate').value
+            };
+
+            try {
+                const msg = await api.timetable.markAbsent(payload);
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'Substitution Complete!', 
+                    text: msg, 
+                    confirmButtonColor: '#4F46E5' 
+                });
+                hideModal('absentModal');
+                e.target.reset();
+                loadTT();
+                fetchDashboardData(); // Update dashboard counts globally if on same page logic (or just ignore)
+            } catch (err) {
+                Swal.fire('Error', err.message || 'Failed to substitute', 'error');
+            } finally {
+                btn.textContent = 'Trigger Auto-Substitute';
+                btn.disabled = false;
+            }
+        });
+
+        async function clearAllTimetable() {
+            const result = await Swal.fire({
+                title: 'Clear ALL Timetable Data?',
+                html: '<p>This will permanently delete <strong>every single class record</strong> from the database.</p><p style="color:#EF4444; margin-top:0.5rem;">Upload a fresh Excel file after this.</p>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#DC2626',
+                cancelButtonText: 'Cancel',
+                confirmButtonText: 'Yes, Wipe All Records'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await api.timetable.clearAll();
+                    Swal.fire({ icon: 'success', title: 'Cleared!', text: 'All timetable data has been wiped. You can now re-upload.', timer: 2500, showConfirmButton: false });
+                    loadTT();
+                } catch (err) {
+                    Swal.fire('Error', err.message || 'Failed to clear', 'error');
+                }
+            }
+        }
+
+        async function deleteTT(id) {
+            const result = await Swal.fire({
+                title: 'Cancel this lecture?',
+                text: "The lecture will be removed from the schedule.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonText: 'No',
+                confirmButtonText: 'Yes, delete it!'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await api.timetable.delete(id);
+                    Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Schedule deleted', timer: 1500, showConfirmButton: false });
+                    loadTT();
+                } catch (err) {
+                    Swal.fire('Error', 'Unable to delete.', 'error');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initPage);
+
+        function downloadPDF() {
+            const tableElement = document.querySelector('.table-container');
+            const opt = {
+                margin:       0.5,
+                filename:     'Smart_Faculty_Timetable.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+            
+            // Temporary hide the actions column for cleaner PDF
+            const actionsTh = tableElement.querySelector('th:last-child');
+            const actionTds = tableElement.querySelectorAll('td:last-child');
+            if (actionsTh) actionsTh.style.display = 'none';
+            actionTds.forEach(td => td.style.display = 'none');
+
+            html2pdf().set(opt).from(tableElement).save().then(() => {
+                // Restore actions column after export
+                if (actionsTh) actionsTh.style.display = '';
+                actionTds.forEach(td => td.style.display = '');
+                
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'Downloaded!', 
+                    text: 'Your current timetable view has been exported to PDF.', 
+                    timer: 2000, 
+                    showConfirmButton: false 
+                });
+            });
+        }
+    </script>
+</body>
+</html>

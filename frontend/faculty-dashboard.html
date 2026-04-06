@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Portal - Smart Alert System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .faculty-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .absent-btn {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .absent-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+        }
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .class-card {
+            background: white;
+            padding: 1.5rem;
+            border-left: 4px solid #10B981;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .class-card.substituted {
+            border-left-color: #F59E0B;
+            background: #FFFBEB;
+        }
+        .class-card.cancelled {
+            border-left-color: #EF4444;
+            background: #FEF2F2;
+        }
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            background: #111827;
+            padding: 1rem 2rem;
+            color: white;
+        }
+        .logout-link {
+            color: #d1d5db;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body style="background: #F3F4F6;">
+
+    <div class="top-nav">
+        <div style="font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="lni lni-pulse"></i> Faculty Portal
+        </div>
+        <a id="logoutBtn" class="logout-link"><i class="lni lni-exit"></i> Logout</a>
+    </div>
+
+    <div style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+        
+        <div class="faculty-header">
+            <div>
+                <h1 style="color: #111827; margin-bottom: 0.5rem;">Welcome, <span id="facultyNameText">Faculty</span></h1>
+                <p style="color: #6B7280; font-size: 0.95rem;">View your upcoming schedule below.</p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button id="changePasswordBtn" class="btn" style="background: white; border: 1px solid #D1D5DB; color: #374151; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+                    <i class="lni lni-lock"></i> Change Password
+                </button>
+                <button id="markAbsentBtn" class="absent-btn">
+                    <i class="lni lni-warning"></i> Report Emergency Absence Today
+                </button>
+            </div>
+        </div>
+        
+        <!-- Alerts Configuration Card -->
+        <div style="background: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <div style="border-right: 1px solid #E5E7EB; padding-right: 2rem;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; color: #111827; margin-bottom: 0.5rem;">
+                    <i class="lni lni-telegram-original" style="color: #0088cc;"></i> Mobile Telegram Alerts
+                </h3>
+                <p id="telegramStatus" style="font-size: 0.85rem; color: #6B7280; margin-bottom: 1rem;">Not linked to Telegram bot yet.</p>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="telegramChatIdInput" placeholder="Enter your Chat ID" style="padding: 0.5rem; border: 1px solid #D1D5DB; border-radius: 6px; flex-grow: 1;">
+                    <button id="linkTelegramBtn" class="btn" style="background: #0088cc; color: white; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; border: none; cursor: pointer;">Link Bot</button>
+                </div>
+                <p style="font-size: 0.75rem; color: #9CA3AF; margin-top: 0.5rem;">1. Message <strong>@userinfobot</strong> on Telegram to get your ID.<br>2. Send <strong>/start</strong> to our college bot.</p>
+            </div>
+            <div style="padding-left: 1rem;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; color: #111827; margin-bottom: 0.5rem;">
+                    <i class="lni lni-alarm" style="color: #4F46E5;"></i> Browser Notifications
+                </h3>
+                <p style="font-size: 0.85rem; color: #6B7280; margin-bottom: 1rem;">Get desktop popups even if the tab is inactive.</p>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button id="enableBrowserPushBtn" class="btn" style="background: #4F46E5; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="lni lni-check-box"></i> Enable Desktop Alerts
+                    </button>
+                    <button id="testAlertBtn" class="btn" style="background: white; border: 1px solid #D1D5DB; color: #4B5563; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="lni lni-play"></i> Send Test Alert
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <h2 style="margin-bottom: 1rem; color: #374151;">My Upcoming Classes</h2>
+        <div id="scheduleGrid" class="schedule-grid">
+            <!-- Classes injected here -->
+        </div>
+
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userStr = localStorage.getItem('facultyUser');
+            if (!userStr) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            const facultyUser = JSON.parse(userStr);
+            document.getElementById('facultyNameText').textContent = facultyUser.name;
+
+            // Load Initial Data
+            await loadMySchedule(facultyUser.id);
+
+            // Telegram UI Status
+            if (facultyUser.telegramChatId) {
+                document.getElementById('telegramStatus').innerHTML = `<span style="color: #10B981; font-weight: 600;">✅ Linked (ID: ${facultyUser.telegramChatId})</span>`;
+                document.getElementById('telegramChatIdInput').value = facultyUser.telegramChatId;
+                document.getElementById('linkTelegramBtn').textContent = 'Update ID';
+            }
+
+            // Link Telegram Event
+            document.getElementById('linkTelegramBtn').addEventListener('click', async () => {
+                const chatId = document.getElementById('telegramChatIdInput').value.trim();
+                if (!chatId) return Swal.fire('Error', 'Please enter your Telegram Chat ID', 'error');
+                
+                try {
+                    await api.faculty.linkTelegram({ facultyId: facultyUser.id, chatId });
+                    facultyUser.telegramChatId = chatId;
+                    localStorage.setItem('facultyUser', JSON.stringify(facultyUser));
+                    Swal.fire('Success', 'Telegram linked successfully!', 'success');
+                    document.getElementById('telegramStatus').innerHTML = `<span style="color: #10B981; font-weight: 600;">✅ Linked (ID: ${chatId})</span>`;
+                } catch (e) {
+                    Swal.fire('Error', 'Failed to link Telegram', 'error');
+                }
+            });
+
+            // Browser Notification Permission
+            const updateNotifyButton = (perm) => {
+                const btn = document.getElementById('enableBrowserPushBtn');
+                if (perm === 'granted') {
+                    btn.innerHTML = '<i class="lni lni-checkmark-circle"></i> Alerts Active';
+                    btn.style.background = '#10B981';
+                } else if (perm === 'denied') {
+                    btn.innerHTML = '<i class="lni lni-close"></i> Notifications Blocked';
+                    btn.style.background = '#6B7280';
+                }
+            };
+
+            // Initial Check
+            if ("Notification" in window) {
+                updateNotifyButton(Notification.permission);
+            }
+
+            document.getElementById('enableBrowserPushBtn').addEventListener('click', async () => {
+                if (!("Notification" in window)) {
+                    return Swal.fire('Unsupported', 'This browser does not support desktop alerts.', 'error');
+                }
+
+                if (Notification.permission === 'denied') {
+                    return Swal.fire('Permission Denied', 'You have blocked notifications. Please click the "Lock" icon in your URL bar and select "Allow" for notifications.', 'warning');
+                }
+
+                const permission = await api.notifications.requestPermission();
+                updateNotifyButton(permission);
+                
+                if (permission === 'granted') {
+                    Swal.fire('Notifications Enabled', 'You will now receive desktop alerts for classes.', 'success');
+                    api.notifications.send("Test Notification", "Desktop alerts are now working!");
+                } else {
+                    Swal.fire('Notice', 'Notification permission was: ' + permission, 'info');
+                }
+            });
+
+            // Manual Test Button
+            document.getElementById('testAlertBtn').addEventListener('click', () => {
+                if (Notification.permission === 'granted') {
+                    api.notifications.send("Test Success ✅", "This is how your class reminders will appear!");
+                    Swal.fire('Sent', 'A test alert has been dispatched to your desktop.', 'success');
+                } else {
+                    Swal.fire('Not Enabled', 'Please click "Enable Desktop Alerts" first.', 'warning');
+                }
+            });
+
+            // Start Browser Alert Poller (every 60s)
+            setInterval(() => checkUpcomingForBrowserAlerts(facultyUser.id), 60000);
+
+            // Change Password
+            document.getElementById('changePasswordBtn').addEventListener('click', async () => {
+                const { value: newPassword } = await Swal.fire({
+                    title: 'Update Password',
+                    input: 'password',
+                    inputLabel: 'New Secure Password',
+                    inputPlaceholder: 'At least 8 characters',
+                    showCancelButton: true,
+                    inputValidator: (v) => (!v || v.length < 8) ? 'Minimum 8 characters' : null
+                });
+
+                if (newPassword) {
+                    try {
+                        await api.auth.facultyPasswordChange({ facultyId: facultyUser.id, newPassword });
+                        Swal.fire('Success', 'Password updated.', 'success');
+                    } catch (e) {
+                        Swal.fire('Error', 'Failed to update', 'error');
+                    }
+                }
+            });
+
+            // Mark Absent
+            document.getElementById('markAbsentBtn').addEventListener('click', async () => {
+                const res = await Swal.fire({
+                    title: 'Report Absence?',
+                    text: 'Register emergency absence for TODAY.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#EF4444'
+                });
+
+                if (res.isConfirmed) {
+                    try {
+                        const today = new Date().toISOString().split('T')[0];
+                        await api.timetable.markAbsent({ facultyId: facultyUser.id, date: today });
+                        Swal.fire('Success', 'Absence logged.', 'success');
+                        await loadMySchedule(facultyUser.id);
+                    } catch (e) {
+                        Swal.fire('Error', 'Failed to report absence', 'error');
+                    }
+                }
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                localStorage.removeItem('facultyUser');
+                window.location.href = 'index.html';
+            });
+        });
+
+        const alertedClasses = new Set(); // Track to avoid double-notification
+
+        async function checkUpcomingForBrowserAlerts(facultyId) {
+            try {
+                const timetables = await api.timetable.getAll();
+                const todayStr = new Date().toISOString().split('T')[0];
+                const now = new Date();
+                
+                timetables.forEach(t => {
+                    if (t.faculty.id === facultyId && t.date === todayStr && t.status === 'SCHEDULED') {
+                        // Manual parsing to ensure strict local time handling
+                        const [hours, mins, secs] = t.startTime.split(':').map(Number);
+                        const classStartTime = new Date();
+                        classStartTime.setHours(hours, mins, secs || 0, 0);
+                        
+                        const diffInMs = classStartTime - now;
+                        const diffInMins = Math.ceil(diffInMs / 60000); 
+
+                        const alertKey = `${t.id}-${diffInMins}`;
+                        if (alertedClasses.has(alertKey)) return;
+
+                        // Precise 10 and 5 minute windows
+                        if (diffInMins === 10) {
+                            api.notifications.send("⏰ 10-Min Warning", `Your class ${t.subject} starts at ${t.startTime}.`);
+                            alertedClasses.add(alertKey);
+                        } else if (diffInMins === 5) {
+                            api.notifications.send("🚨 5-Min Urgent", `Your class ${t.subject} is about to begin!`);
+                            alertedClasses.add(alertKey);
+                        }
+                    }
+                });
+            } catch (e) { console.error("Poller failed", e); }
+        }
+
+        async function updateClassStatus(id, selectElement) {
+            const newStatus = selectElement.value;
+            try {
+                await api.timetable.updateStatus(id, newStatus);
+                const userStr = localStorage.getItem('facultyUser');
+                if (userStr) await loadMySchedule(JSON.parse(userStr).id);
+            } catch (e) {
+                Swal.fire('Error', 'Failed to update status', 'error');
+                selectElement.value = "SCHEDULED";
+            }
+        }
+
+        async function loadMySchedule(facultyId) {
+            const grid = document.getElementById('scheduleGrid');
+            grid.innerHTML = '<p>Loading your schedule...</p>';
+            
+            try {
+                const timetables = await api.timetable.getAll();
+                const today = new Date().toISOString().split('T')[0];
+                const myClasses = timetables.filter(t => t.faculty.id === facultyId && t.date >= today)
+                    .sort((a,b) => a.date === b.date ? a.startTime.localeCompare(b.startTime) : a.date.localeCompare(b.date));
+
+                if (myClasses.length === 0) {
+                    grid.innerHTML = '<p style="color: #6B7280;">No upcoming classes.</p>';
+                    return;
+                }
+
+                grid.innerHTML = '';
+                myClasses.forEach(tc => {
+                    const div = document.createElement('div');
+                    div.className = `class-card ${tc.status.toLowerCase()}`;
+                    
+                    let badge = tc.status === 'SUBSTITUTED' ? 
+                        `<span style="background:#FEF3C7; color:#D97706; padding:0.2rem 0.6rem; border-radius:12px; font-size:0.75rem; font-weight:600;">Substituted</span>` :
+                        `<select onchange="updateClassStatus(${tc.id}, this)" style="border: 1px solid #D1D5DB; border-radius: 6px; padding: 0.2rem;">
+                            <option value="SCHEDULED" ${tc.status === 'SCHEDULED' ? 'selected' : ''}>Scheduled</option>
+                            <option value="COMPLETED" ${tc.status === 'COMPLETED' ? 'selected' : ''}>Completed</option>
+                            <option value="CANCELLED" ${tc.status === 'CANCELLED' ? 'selected' : ''}>Cancelled</option>
+                        </select>`;
+
+                    if (tc.status === 'COMPLETED') { div.style.borderLeftColor = '#3B82F6'; div.style.background = '#EFF6FF'; }
+
+                    div.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+                            <h3 style="margin:0;">${tc.subject}</h3>
+                            ${badge}
+                        </div>
+                        <p style="margin:0.2rem 0;"><i class="lni lni-calendar"></i> ${tc.date}</p>
+                        <p style="margin:0.2rem 0;"><i class="lni lni-clock"></i> ${tc.startTime} - ${tc.endTime}</p>
+                        ${tc.originalFaculty ? `<p style="font-size:0.85rem; color:#6B7280;">Covering for: ${tc.originalFaculty.name}</p>` : ''}
+                    `;
+                    grid.appendChild(div);
+                });
+
+            } catch(e) { grid.innerHTML = `<p style="color:#EF4444;">Error loading schedule.</p>`; }
+        }
+    </script>
+</body>
+</html>

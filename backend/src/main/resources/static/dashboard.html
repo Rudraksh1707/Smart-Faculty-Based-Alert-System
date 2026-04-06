@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart Faculty Alert System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="lni lni-pulse"></i>
+            <span>Faculty Alert</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item active">
+                <i class="lni lni-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="faculty.html" class="nav-item">
+                <i class="lni lni-users"></i>
+                <span>Faculty Management</span>
+            </a>
+            <a href="timetable.html" class="nav-item">
+                <i class="lni lni-calendar"></i>
+                <span>Timetable Management</span>
+            </a>
+        </nav>
+        <div class="logout-btn" id="logoutBtn">
+            <i class="lni lni-exit"></i>
+            <span>Logout</span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">HOD Dashboard</h1>
+                <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 0.25rem;">Welcome back, Head of Department <span class="user-name-display" style="font-weight: 700; color: var(--primary);">User</span></p>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="lni lni-users"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>Total Faculty</h3>
+                    <p id="totalFacultyCount">0</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                    <i class="lni lni-calendar"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>Classes Today</h3>
+                    <p id="totalLecturesCount">0</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                    <i class="lni lni-library"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>Total Managed Classes</h3>
+                    <p id="totalSysClasses">0</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                    <i class="lni lni-spinner-solid"></i>
+                </div>
+                <div class="stat-details">
+                    <h3>Substituted Classes</h3>
+                    <p id="substitutedCount">0</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid" style="margin-top: 2rem;">
+            <!-- Timeline widget -->
+            <div style="background: var(--card-bg); border-radius: var(--radius-lg); padding: 2rem; box-shadow: var(--shadow-md); grid-column: 1 / -1;">
+                <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="lni lni-pulse" style="color: var(--primary);"></i> Live Timeline Today
+                </h2>
+                <div id="liveTimeline" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Timeline items injected here -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        async function fetchDashboardData() {
+            try {
+                const stats = await api.dashboard.getStats();
+                
+                document.getElementById('totalFacultyCount').textContent = stats.totalFaculty;
+                document.getElementById('totalLecturesCount').textContent = stats.totalClassesToday;
+                document.getElementById('totalSysClasses').textContent = stats.totalClasses;
+                document.getElementById('substitutedCount').textContent = stats.totalSubstitutedToday;
+                
+                const timelineContainer = document.getElementById('liveTimeline');
+                timelineContainer.innerHTML = '';
+                
+                if (!stats.todayTimeline || stats.todayTimeline.length === 0) {
+                    timelineContainer.innerHTML = '<p style="color: var(--text-muted); padding: 1rem 0;">No classes scheduled for today.</p>';
+                    return;
+                }
+                
+                stats.todayTimeline.forEach(item => {
+                    const el = document.createElement('div');
+                    el.style = `display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-radius: var(--radius-md); background: ${item.status === 'SUBSTITUTED' ? '#FEF3C7' : (item.status === 'CANCELLED' ? '#FEE2E2' : '#F3F4F6')}; border-left: 4px solid ${item.status === 'SUBSTITUTED' ? '#F59E0B' : (item.status === 'CANCELLED' ? '#EF4444' : 'var(--primary)')};`;
+                    
+                    let statusLabel = '';
+                    if (item.status === 'SUBSTITUTED') statusLabel = `<span style="color: #D97706; font-size: 0.8rem; font-weight: bold; margin-left:1rem;">(Substituted: ${item.originalFaculty ? item.originalFaculty.name : ''} -> ${item.faculty.name})</span>`;
+                    if (item.status === 'CANCELLED') statusLabel = `<span style="color: #DC2626; font-size: 0.8rem; font-weight: bold; margin-left:1rem;">(Cancelled)</span>`;
+
+                    el.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="font-weight: 700; color: var(--text-base); width: 140px;">${item.startTime} - ${item.endTime}</div>
+                            <div>
+                                <strong style="color: var(--text-base);">${item.subject}</strong>
+                                <span style="color: var(--text-muted); margin-left: 0.5rem;">with ${item.faculty.name}</span>
+                                ${statusLabel}
+                            </div>
+                        </div>
+                    `;
+                    timelineContainer.appendChild(el);
+                });
+
+            } catch (err) {
+                console.error("Dashboard failed to load:", err);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', fetchDashboardData);
+    </script>
+</body>
+</html>

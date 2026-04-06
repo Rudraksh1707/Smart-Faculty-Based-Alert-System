@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Management - Smart Faculty Alert System</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="lni lni-pulse"></i>
+            <span>Faculty Alert</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-item">
+                <i class="lni lni-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="faculty.html" class="nav-item active">
+                <i class="lni lni-users"></i>
+                <span>Faculty Management</span>
+            </a>
+            <a href="timetable.html" class="nav-item">
+                <i class="lni lni-calendar"></i>
+                <span>Timetable Management</span>
+            </a>
+        </nav>
+        <div class="logout-btn" id="logoutBtn">
+            <i class="lni lni-exit"></i>
+            <span>Logout</span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">Faculty Roster</h1>
+                <p style="color: var(--text-muted);">Manage institution educators and staff.</p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn" id="toggleQuickFixBtn" onclick="toggleQuickFix()" style="background: #F3F4F6; color: #374151; border: 1px solid #D1D5DB; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 8px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s;">
+                    <i class="lni lni-keyboard"></i> Toggle Quick-Fix Mode
+                </button>
+                <button class="btn btn-primary" onclick="showModal('facultyModal')">
+                    <i class="lni lni-plus"></i> Add Faculty
+                </button>
+            </div>
+        </header>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2 style="font-size: 1.125rem;">All Faculty Members</h2>
+                <div style="position: relative;">
+                    <input type="text" id="facultySearch" class="form-control" placeholder="Search faculty..." style="padding-left: 2.5rem; width: 250px;">
+                    <i class="lni lni-search-alt" style="position: absolute; left: 1rem; top: 0.8rem; color: var(--text-muted);"></i>
+                </div>
+            </div>
+            <table id="facultyTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Subject</th>
+                        <th>Department</th>
+                        <th>Mobile</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="facultyBody">
+                    <!-- Data populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Add Faculty Modal -->
+    <div class="modal-overlay" id="facultyModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add / Edit Faculty</h2>
+                <button class="btn-icon close-modal"><i class="lni lni-close"></i></button>
+            </div>
+            <form id="facultyForm">
+                <div class="modal-body">
+                    <input type="hidden" id="facId">
+                    <div class="form-group">
+                        <label for="facName">Full Name</label>
+                        <input type="text" id="facName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="facDept">Department</label>
+                        <select id="facDept" class="form-control" required>
+                            <option value="">Select Department</option>
+                            <option value="CSIT">CSIT</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Mechanical">Mechanical</option>
+                            <option value="Civil">Civil</option>
+                            <option value="Mathematics">Mathematics</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="facSubject">Core Subject</label>
+                        <input type="text" id="facSubject" class="form-control" placeholder="(Optional) e.g. Data Structures">
+                    </div>
+                    <div class="form-group">
+                        <label for="facEmail">Email Address</label>
+                        <input type="email" id="facEmail" class="form-control" required placeholder="(Will receive alerts here)">
+                    </div>
+                    <div class="form-group">
+                        <label for="facMobile">Mobile Number</label>
+                        <input type="text" id="facMobile" class="form-control" placeholder="(Optional for SMS alerts)">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn close-modal" style="background: var(--border); color: var(--text-main);">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Faculty</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js?v=2"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let quickFixMode = false;
+        
+        async function loadFaculty() {
+            try {
+                facultyData = await api.faculty.getAll();
+                renderTable(facultyData);
+            } catch (err) {
+                Swal.fire('Error', 'Failed to fetch faculty data', 'error');
+            }
+        }
+
+        function toggleQuickFix() {
+            quickFixMode = !quickFixMode;
+            const btn = document.getElementById('toggleQuickFixBtn');
+            if (quickFixMode) {
+                btn.style.background = '#EEF2FF';
+                btn.style.borderColor = '#4F46E5';
+                btn.style.color = '#4F46E5';
+                btn.innerHTML = '<i class="lni lni-checkmark-circle"></i> Quick-Fix Active';
+            } else {
+                btn.style.background = '#F3F4F6';
+                btn.style.borderColor = '#D1D5DB';
+                btn.style.color = '#374151';
+                btn.innerHTML = '<i class="lni lni-keyboard"></i> Toggle Quick-Fix Mode';
+            }
+            renderTable(facultyData);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('facultyBody');
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color: var(--text-muted); padding: 2rem;">No faculty members found.</td></tr>';
+                return;
+            }
+
+            data.forEach(fac => {
+                const tr = document.createElement('tr');
+                if (quickFixMode) {
+                    tr.innerHTML = `
+                        <td>#${fac.id}</td>
+                        <td><input type="text" class="form-control" value="${fac.name}" onblur="saveInlineFaculty(${fac.id}, 'name', this.value)" style="padding: 0.4rem; font-size: 0.9rem;"></td>
+                        <td style="color: var(--text-muted);">${fac.subject || '--'}</td>
+                        <td><span class="badge" style="background: rgba(79, 70, 229, 0.1); color: var(--primary);">${fac.department}</span></td>
+                        <td>${fac.mobile}</td>
+                        <td><input type="text" class="form-control" value="${fac.email}" onblur="saveInlineFaculty(${fac.id}, 'email', this.value)" style="padding: 0.4rem; font-size: 0.9rem;"></td>
+                        <td id="status-${fac.id}" style="font-size: 0.75rem; color: #10B981;"></td>
+                    `;
+                } else {
+                    tr.innerHTML = `
+                        <td>#${fac.id}</td>
+                        <td style="font-weight: 500;">${fac.name}</td>
+                        <td style="color: var(--text-muted);">${fac.subject || '--'}</td>
+                        <td><span class="badge" style="background: rgba(79, 70, 229, 0.1); color: var(--primary);">${fac.department}</span></td>
+                        <td>${fac.mobile}</td>
+                        <td>${fac.email}</td>
+                        <td>
+                            <button class="btn-icon" onclick='openEditModal(${JSON.stringify(fac).replace(/'/g, "&apos;")})' style="color: var(--primary); margin-right: 0.5rem;"><i class="lni lni-pencil"></i></button>
+                            <button class="btn-icon delete" onclick="deleteFac(${fac.id})"><i class="lni lni-trash-can"></i></button>
+                        </td>
+                    `;
+                }
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function saveInlineFaculty(id, field, value) {
+            const statusCell = document.getElementById(`status-${id}`);
+            const fac = facultyData.find(f => f.id === id);
+            
+            // Only update if changed
+            if (fac[field] === value) return;
+            
+            statusCell.textContent = 'Saving...';
+            statusCell.style.color = '#4F46E5';
+            
+            try {
+                const updatedData = { ...fac, [field]: value };
+                await api.faculty.update(id, updatedData);
+                fac[field] = value; // Local update
+                statusCell.textContent = '✓ Saved';
+                statusCell.style.color = '#10B981';
+                setTimeout(() => statusCell.textContent = '', 2000);
+            } catch (err) {
+                statusCell.textContent = 'Error!';
+                statusCell.style.color = '#EF4444';
+                Swal.fire('Error', 'Failed to save: ' + err.message, 'error');
+            }
+        }
+
+        document.getElementById('facultySearch').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = facultyData.filter(f => 
+                f.name.toLowerCase().includes(term) || 
+                f.department.toLowerCase().includes(term) ||
+                f.email.toLowerCase().includes(term)
+            );
+            renderTable(filtered);
+        });
+
+        function openEditModal(fac) {
+            document.getElementById('facId').value = fac.id;
+            document.getElementById('facName').value = fac.name;
+            document.getElementById('facDept').value = fac.department;
+            document.getElementById('facSubject').value = fac.subject || '';
+            document.getElementById('facEmail').value = fac.email;
+            document.getElementById('facMobile').value = fac.mobile;
+            showModal('facultyModal');
+        }
+
+        document.getElementById('facultyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+
+            const facId = document.getElementById('facId').value;
+            const fac = {
+                name: document.getElementById('facName').value,
+                department: document.getElementById('facDept').value,
+                subject: document.getElementById('facSubject').value,
+                email: document.getElementById('facEmail').value,
+                mobile: document.getElementById('facMobile').value
+            };
+
+            try {
+                if (facId) {
+                    await api.faculty.update(facId, fac);
+                } else {
+                    await api.faculty.create(fac);
+                }
+                Swal.fire({ icon: 'success', title: 'Saved!', text: 'Faculty stored successfully', timer: 1500, showConfirmButton: false });
+                hideModal('facultyModal');
+                e.target.reset();
+                document.getElementById('facId').value = '';
+                loadFaculty();
+            } catch (err) {
+                Swal.fire('Error', err.message || 'Failed to save configuration', 'error');
+            } finally {
+                btn.textContent = 'Save Faculty';
+                btn.disabled = false;
+            }
+        });
+
+        async function deleteFac(id) {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonText: 'Cancel',
+                confirmButtonText: 'Yes, delete it!'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await api.faculty.delete(id);
+                    Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Faculty deleted', timer: 1500, showConfirmButton: false });
+                    loadFaculty();
+                } catch (err) {
+                    Swal.fire('Error', 'Unable to delete. They might be assigned to a timetable.', 'error');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadFaculty);
+    </script>
+</body>
+</html>

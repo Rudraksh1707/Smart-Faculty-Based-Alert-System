@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Faculty Alert System - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
+</head>
+<body>
+
+    <div class="auth-container">
+        
+        <!-- ROLE SELECTION SCREEN -->
+        <div class="role-selection-wrapper" id="roleSelectionScreen" style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 900px;">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h1 style="font-size: 2.8rem; color: #111827; margin-bottom: 0.5rem; font-weight: 800;"><i class="lni lni-pulse" style="color: var(--primary);"></i> Smart Faculty System</h1>
+                <p style="color: #6B7280; font-size: 1.15rem;">Please select your designated portal to continue.</p>
+            </div>
+            <div class="role-cards" style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; width: 100%;">
+                
+                <div class="role-card" onclick="openHodPortal()" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); padding: 3.5rem 2rem; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.06); text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 340px;">
+                    <div style="width: 80px; height: 80px; background: rgba(99, 102, 241, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+                        <i class="lni lni-crown" style="font-size: 3rem; color: var(--primary);"></i>
+                    </div>
+                    <h2 style="color: #111827; margin-bottom: 0.75rem; font-size: 1.5rem; font-weight: 700;">HOD Portal</h2>
+                    <p style="color: #6B7280; font-size: 0.95rem; line-height: 1.5;">Manage your faculty staff, orchestrate timetables, and monitor real-time class status analytics.</p>
+                    <div style="margin-top: 2rem; color: var(--primary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">Enter Portal <i class="lni lni-arrow-right"></i></div>
+                </div>
+
+                <div class="role-card" onclick="openFacultyPortal()" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); padding: 3.5rem 2rem; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.06); text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 340px;">
+                    <div style="width: 80px; height: 80px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto;">
+                        <i class="lni lni-users" style="font-size: 3rem; color: var(--success);"></i>
+                    </div>
+                    <h2 style="color: #111827; margin-bottom: 0.75rem; font-size: 1.5rem; font-weight: 700;">Faculty Member</h2>
+                    <p style="color: #6B7280; font-size: 0.95rem; line-height: 1.5;">Access your personal schedule, log emergency absences, and manage completion history.</p>
+                    <div style="margin-top: 2rem; color: var(--success); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">Enter Portal <i class="lni lni-arrow-right"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-card hidden" id="authCardScreen" style="position: relative;">
+            <button onclick="backToRoles()" style="position: absolute; top: 1.5rem; left: 1.5rem; width: 40px; height: 40px; border-radius: 50%; border: none; background: #F3F4F6; color: #4B5563; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"><i class="lni lni-arrow-left" style="font-size: 1.2rem;"></i></button>
+
+            <div class="auth-header">
+                <i class="lni lni-pulse"></i>
+                <h1 id="portalTitle">HOD Portal</h1>
+                <p id="portalSub">Sign in to the Department Management System</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="active">
+                <div class="form-group">
+                    <label for="loginUsername">HOD Username</label>
+                    <input type="text" id="loginUsername" class="form-control" required placeholder="Enter HOD username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="form-control" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn btn-primary auth-submit">Log In as HOD</button>
+                <div class="auth-toggle" style="margin-top: 1.5rem;">
+                    Don't have a department account? <a id="showRegister" style="cursor:pointer;">Register directly</a>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label for="regUsername">HOD Username</label>
+                    <input type="text" id="regUsername" class="form-control" required placeholder="Choose a username">
+                </div>
+                <div class="form-group">
+                    <label for="regEmail">HOD Email</label>
+                    <input type="email" id="regEmail" class="form-control" required placeholder="Enter department email">
+                </div>
+                <div class="form-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" class="form-control" required placeholder="Choose a password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least one number, one uppercase, one lowercase letter, and be at least 8 characters long">
+                </div>
+                <button type="submit" class="btn btn-primary auth-submit">Register HOD Account</button>
+                <div class="auth-toggle" style="margin-top: 1.5rem;">
+                    Already have an account? <a id="showLogin" style="cursor:pointer;">Return to Log in</a>
+                </div>
+            </form>
+            
+            <!-- Faculty Login Form -->
+            <form id="facultyLoginForm" class="hidden">
+                <div class="form-group">
+                    <label for="facEmail">Faculty Email</label>
+                    <input type="email" id="facEmail" class="form-control" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="facPassword">Password</label>
+                    <input type="password" id="facPassword" class="form-control" required placeholder="Enter your password">
+                </div>
+                <button type="submit" class="btn btn-primary auth-submit" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-color: transparent;">Log In as Faculty</button>
+                <div class="auth-toggle" style="margin-top: 1.5rem;">
+                    Lost your credentials? Contact your HOD.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Configuration scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Role Selection Transitions
+        function openHodPortal() {
+            document.getElementById('roleSelectionScreen').style.display = 'none';
+            document.getElementById('authCardScreen').classList.remove('hidden');
+            
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('facultyLoginForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('portalTitle').innerText = 'HOD Login';
+            document.getElementById('portalSub').innerText = 'Sign in to the Department Management System';
+        }
+
+        function openFacultyPortal() {
+            document.getElementById('roleSelectionScreen').style.display = 'none';
+            document.getElementById('authCardScreen').classList.remove('hidden');
+            
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('facultyLoginForm').classList.remove('hidden');
+            document.getElementById('portalTitle').innerText = 'Faculty Portal';
+            document.getElementById('portalSub').innerText = 'Access your personal schedule & manage status';
+        }
+
+        function backToRoles() {
+            document.getElementById('authCardScreen').classList.add('hidden');
+            document.getElementById('roleSelectionScreen').style.display = 'flex';
+        }
+
+        document.getElementById('showRegister').addEventListener('click', () => {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('facultyLoginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('portalTitle').innerText = 'HOD Registration';
+            document.getElementById('portalSub').innerText = 'Create a secure department master account';
+        });
+
+        document.getElementById('showLogin').addEventListener('click', openHodPortal);
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const user = await api.auth.login({ username, password });
+                localStorage.setItem('adminUser', JSON.stringify(user));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Welcome back!',
+                    text: 'Login successful',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = 'dashboard.html';
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Authentication Failed',
+                    text: error.message || 'Invalid credentials'
+                });
+            }
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                await api.auth.register({ username, email, password });
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Account Created',
+                    text: 'Please log in with your new credentials!',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    document.getElementById('registerForm').classList.add('hidden');
+                    document.getElementById('loginForm').classList.remove('hidden');
+                    document.getElementById('portalTitle').innerText = 'HOD Portal';
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Registration Failed',
+                    text: error.message || 'Registration failed'
+                });
+            }
+        });
+
+        document.getElementById('facultyLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('facEmail').value;
+            const password = document.getElementById('facPassword').value;
+
+            try {
+                const user = await api.auth.facultyLogin({ email, password });
+                localStorage.setItem('facultyUser', JSON.stringify(user));
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Welcome back!',
+                    text: 'Login successful',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = 'faculty-dashboard.html';
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Authentication Failed',
+                    text: 'Invalid faculty credentials'
+                });
+            }
+        });
+    </script>
+</body>
+</html>
