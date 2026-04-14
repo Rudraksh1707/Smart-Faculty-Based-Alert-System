@@ -17,6 +17,7 @@ public class AlertScheduler {
     private final TimetableRepository timetableRepository;
     private final EmailService emailService;
     private final TelegramService telegramService;
+    private final WhatsAppService whatsappService;
 
     // Run every minute
     @Scheduled(fixedRate = 60000)
@@ -49,6 +50,14 @@ public class AlertScheduler {
                     "*⏰ 10-Min Warning*\n\nYour lecture for *" + t.getSubject() + "* starts in exactly 10 minutes.\n\nTime: `" + t.getStartTime() + " - " + t.getEndTime() + "`"
                 );
             }
+
+            // WHATSAPP DISPATCH
+            if (t.getFaculty().getMobile() != null && !t.getFaculty().getMobile().isEmpty()) {
+                whatsappService.sendMessage(
+                    t.getFaculty().getMobile(),
+                    "*⏰ 10-Min Warning*\n\nYour lecture for *" + t.getSubject() + "* starts in 10 minutes.\n\nTime: " + t.getStartTime() + " - " + t.getEndTime()
+                );
+            }
         }
 
         // 5 MINUTE WARNING
@@ -69,6 +78,14 @@ public class AlertScheduler {
                 telegramService.sendMessage(
                     t.getFaculty().getTelegramChatId(),
                     "*🚨 5-Min Urgent Warning*\n\nYour lecture *" + t.getSubject() + "* is starting very soon!\n\nTime: `" + t.getStartTime() + " - " + t.getEndTime() + "`"
+                );
+            }
+
+            // WHATSAPP DISPATCH
+            if (t.getFaculty().getMobile() != null && !t.getFaculty().getMobile().isEmpty()) {
+                whatsappService.sendMessage(
+                    t.getFaculty().getMobile(),
+                    "*🚨 5-Min Urgent Warning*\n\nYour lecture *" + t.getSubject() + "* is starting very soon!\n\nTime: " + t.getStartTime() + " - " + t.getEndTime()
                 );
             }
         }
