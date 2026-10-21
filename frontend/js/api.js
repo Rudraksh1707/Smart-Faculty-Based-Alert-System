@@ -1,4 +1,4 @@
-const API_BASE = window.location.origin.includes('3000') ? 'http://localhost:8080/api' : window.location.origin + '/api';
+const API_BASE = "https://smart-faculty-based-alert-system.onrender.com/api";
 
 const api = {
     // Utility for generic fetch with JSON
